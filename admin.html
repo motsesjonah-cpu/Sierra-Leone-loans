@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swift Loan — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --orange: #FF6B00;
+  --orange-dark: #CC5500;
+  --orange-light: #FFF4ED;
+  --blue: #001F5C;
+  --green: #16a34a;
+  --red: #dc2626;
+  --yellow: #f59e0b;
+  --bg: #f1f5f9;
+  --card: #ffffff;
+  --text: #1e293b;
+  --muted: #64748b;
+  --border: #e2e8f0;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+body{background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* Sidebar */
+.sidebar{position:fixed;top:0;left:0;width:260px;height:100vh;background:var(--blue);display:flex;flex-direction:column;z-index:100;overflow-y:auto;}
+.sidebar-logo{padding:24px 20px;border-bottom:1px solid rgba(255,255,255,0.1);}
+.sidebar-logo h1{font-size:18px;font-weight:800;color:#fff;}
+.sidebar-logo h1 span{color:var(--orange);}
+.sidebar-logo p{font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px;}
+.nav-section{padding:16px 12px 8px;font-size:10px;font-weight:700;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 16px;margin:2px 8px;border-radius:10px;cursor:pointer;transition:all 0.2s;color:rgba(255,255,255,0.7);font-size:13px;font-weight:500;}
+.nav-item:hover{background:rgba(255,107,0,0.15);color:#fff;}
+.nav-item.active{background:var(--orange);color:#fff;font-weight:700;}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;}
+.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid rgba(255,255,255,0.1);}
+.sidebar-footer p{font-size:11px;color:rgba(255,255,255,0.35);text-align:center;}
+
+/* Main content */
+.main{margin-left:260px;min-height:100vh;}
+.topbar{background:#fff;padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.topbar h2{font-size:18px;font-weight:800;color:var(--text);}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.badge-live{background:#dcfce7;color:var(--green);font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;display:flex;align-items:center;gap:5px;}
+.badge-live::before{content:'';width:7px;height:7px;background:var(--green);border-radius:50%;animation:livePulse 1.5s infinite;}
+@keyframes livePulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+@keyframes spin{to{transform:rotate(360deg);}}
+.refresh-btn{padding:8px 14px;background:var(--orange);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;transition:background 0.2s;}
+.refresh-btn:hover{background:var(--orange-dark);}
+
+.content{padding:24px 28px;}
+
+/* Stats grid */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--card);border-radius:14px;padding:18px 16px;border:1px solid var(--border);position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;opacity:0.08;}
+.stat-card.orange::before{background:var(--orange);}
+.stat-card.green::before{background:var(--green);}
+.stat-card.blue::before{background:#3b82f6;}
+.stat-card.yellow::before{background:var(--yellow);}
+.stat-card.red::before{background:var(--red);}
+.stat-card.purple::before{background:#7c3aed;}
+.stat-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+.stat-value{font-size:28px;font-weight:800;color:var(--text);}
+.stat-value.orange{color:var(--orange);}
+.stat-value.green{color:var(--green);}
+.stat-value.red{color:var(--red);}
+.stat-value.yellow{color:var(--yellow);}
+.stat-value.blue{color:#3b82f6;}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+
+/* Sections */
+.section-title{font-size:16px;font-weight:800;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.section-title svg{width:18px;height:18px;color:var(--orange);}
+
+/* Tables */
+.table-wrap{background:var(--card);border-radius:14px;border:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:24px;}
+.table-scroll{width:100%;}
+.table-header{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;}
+.table-header h3{font-size:14px;font-weight:700;}
+.search-input{padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;outline:none;width:200px;transition:border 0.2s;max-width:100%;}
+.search-input:focus{border-color:var(--orange);}
+table{width:100%;border-collapse:collapse;min-width:600px;}
+th{background:#f8fafc;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;}
+td{padding:12px 14px;border-top:1px solid var(--border);font-size:12.5px;vertical-align:middle;}
+tr:hover td{background:#f8fafc;}
+
+/* Status badges */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge.pending{background:#fef3c7;color:#92400e;}
+.badge.approved{background:#dcfce7;color:#15803d;}
+.badge.rejected{background:#fee2e2;color:#b91c1c;}
+.badge.proof_submitted{background:#dbeafe;color:#1e40af;}
+
+/* Screenshot thumbnail */
+.thumb{width:48px;height:48px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid var(--border);transition:border 0.2s;}
+.thumb:hover{border-color:var(--orange);}
+
+/* Action buttons */
+.action-btn{padding:5px 10px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.btn-approve{background:#dcfce7;color:#15803d;}
+.btn-approve:hover{background:#bbf7d0;}
+.btn-reject{background:#fee2e2;color:#b91c1c;}
+.btn-reject:hover{background:#fecaca;}
+.btn-view{background:#f1f5f9;color:var(--muted);}
+.btn-view:hover{background:#e2e8f0;}
+
+/* Code management */
+.codes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:24px;}
+.code-card{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px;}
+.code-card.active-code{border-color:var(--orange);}
+.code-display{font-size:28px;font-weight:900;color:var(--text);letter-spacing:4px;font-variant-numeric:tabular-nums;}
+.code-status{font-size:11px;font-weight:700;}
+.code-status.on{color:var(--green);}
+.code-status.off{color:var(--red);}
+.code-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.toggle-btn{padding:6px 12px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
+.toggle-on{background:#dcfce7;color:var(--green);}
+.toggle-off{background:#fee2e2;color:var(--red);}
+.edit-code-btn{padding:6px 12px;background:#f1f5f9;color:var(--muted);border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
+.delete-code-btn{padding:6px 12px;background:#fee2e2;color:var(--red);border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
+
+/* Add code form */
+.add-code-form{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;}
+.form-input{padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;transition:border 0.2s;width:200px;}
+.form-input:focus{border-color:var(--orange);}
+.add-btn{padding:10px 20px;background:var(--orange);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:background 0.2s;white-space:nowrap;}
+.add-btn:hover{background:var(--orange-dark);}
+
+/* Analytics bar charts */
+.bar-chart{display:flex;flex-direction:column;gap:10px;}
+.bar-row{display:flex;align-items:center;gap:10px;}
+.bar-label{font-size:12px;font-weight:600;color:var(--text);width:100px;flex-shrink:0;}
+.bar-track{flex:1;height:12px;background:#f1f5f9;border-radius:10px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:10px;transition:width 1s ease;}
+.bar-val{font-size:12px;font-weight:700;color:var(--muted);width:30px;text-align:right;flex-shrink:0;}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;background:#f1f5f9;padding:4px;border-radius:10px;margin-bottom:20px;width:fit-content;}
+.tab{padding:8px 16px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;background:transparent;color:var(--muted);}
+.tab.active{background:#fff;color:var(--text);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,0.1);}
+
+/* Page sections */
+.page-section{display:none;}
+.page-section.active{display:block;}
+
+/* Lightbox */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;}
+.lightbox img{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:12px;}
+.lightbox-close{position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.2);border:none;color:#fff;font-size:24px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+/* Phones table */
+.phone-tag{display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600;margin:2px;}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;color:#fff;z-index:9999;animation:toastIn 0.3s ease;box-shadow:0 4px 20px rgba(0,0,0,0.2);}
+.toast.success{background:var(--green);}
+.toast.error{background:var(--red);}
+.toast.info{background:var(--blue);}
+@keyframes toastIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+/* Mobile responsive — sidebar hidden on ≤900px, hamburger shown */
+.hamburger{display:none;align-items:center;justify-content:center;width:38px;height:38px;background:var(--bg);border:1px solid var(--border);border-radius:8px;cursor:pointer;flex-shrink:0;}
+.hamburger span{display:block;width:20px;height:2.5px;background:var(--text);border-radius:2px;}
+.hamburger span+span{margin-top:5px;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99;}
+.sidebar-overlay.open{display:block;}
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%);transition:transform 0.3s;width:260px;z-index:200;}
+  .sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,0.3);}
+  .main{margin-left:0;}
+  .topbar{padding:12px 16px;}
+  .content{padding:16px;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .hamburger{display:flex;}
+}
+@media(max-width:480px){
+  .stats-grid{grid-template-columns:1fr;}
+}
+
+.no-data{text-align:center;padding:40px;color:var(--muted);font-size:14px;}
+.loading-row td{text-align:center;padding:30px;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <h1>Swift <span>Loan</span></h1>
+    <p>Admin Dashboard</p>
+  </div>
+  <div class="nav-section">Main</div>
+  <div class="nav-item active" onclick="showPage('overview')">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    Overview
+  </div>
+  <div class="nav-item" onclick="showPage('proofs')">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    Payment Proofs
+  </div>
+  <div class="nav-item" onclick="showPage('requests')">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    Loan Requests
+  </div>
+  <div class="nav-section">Settings</div>
+  <div class="nav-item" onclick="showPage('codes')">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+    Agent Codes
+  </div>
+  <div class="nav-item" onclick="showPage('phones')">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+    User Phones
+  </div>
+  <div class="sidebar-footer">
+    <p>Swift Loan Admin v1.0</p>
+  </div>
+</aside>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="hamburger" onclick="toggleSidebar()" id="hamburgerBtn">
+        <span></span><span></span><span></span>
+      </div>
+      <h2 id="pageTitle">Overview</h2>
+    </div>
+    <div class="topbar-right">
+      <div class="badge-live">LIVE</div>
+      <button class="refresh-btn" onclick="loadAllData()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── OVERVIEW ───────────────────────────────── -->
+    <div class="page-section active" id="page-overview">
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card orange">
+          <div class="stat-label">Total Requests</div>
+          <div class="stat-value orange" id="stat-total">—</div>
+          <div class="stat-sub">All time</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">Today's Requests</div>
+          <div class="stat-value blue" id="stat-today">—</div>
+          <div class="stat-sub">Today only</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-label">Pending Review</div>
+          <div class="stat-value yellow" id="stat-pending">—</div>
+          <div class="stat-sub">Awaiting admin</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Approved</div>
+          <div class="stat-value green" id="stat-approved">—</div>
+          <div class="stat-sub">Proof approved</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Rejected</div>
+          <div class="stat-value red" id="stat-rejected">—</div>
+          <div class="stat-sub">Proof rejected</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-label">Unique Users</div>
+          <div class="stat-value" id="stat-unique" style="color:#7c3aed;">—</div>
+          <div class="stat-sub">Distinct phones</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+        <div class="table-wrap">
+          <div class="table-header"><h3>Network Breakdown</h3></div>
+          <div style="padding:16px;"><div class="bar-chart" id="networkChart"></div></div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-header"><h3>Agent Code Usage</h3></div>
+          <div style="padding:16px;"><div class="bar-chart" id="codeChart"></div></div>
+        </div>
+      </div>
+
+      <div class="section-title">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Latest Proof Submissions
+      </div>
+      <div class="table-wrap" id="latestProofsWrap">
+        <div class="table-scroll">
+          <table id="latestProofsTable">
+            <thead><tr>
+              <th>Screenshot</th><th>Name</th><th>Phone</th><th style="color:#FF6B00;">Agent Code</th><th>Submitted</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="latestProofsTbody"><tr><td colspan="7" class="loading-row">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PROOFS ───────────────────────────────── -->
+    <div class="page-section" id="page-proofs">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <div class="tabs">
+          <button class="tab active" onclick="filterProofs('all',this)">All</button>
+          <button class="tab" onclick="filterProofs('pending',this)">Pending</button>
+          <button class="tab" onclick="filterProofs('approved',this)">Approved</button>
+          <button class="tab" onclick="filterProofs('rejected',this)">Rejected</button>
+        </div>
+        <input class="search-input" placeholder="Search name or phone…" oninput="searchProofs(this.value)" id="proofSearch">
+      </div>
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table>
+            <thead><tr>
+              <th>Screenshot</th><th>Name</th><th>Phone</th><th style="color:#FF6B00;">Agent Code</th><th>Submitted</th><th>Status</th><th>Notes</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="proofsTbody"><tr><td colspan="8" class="loading-row">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── REQUESTS ───────────────────────────────── -->
+    <div class="page-section" id="page-requests">
+      <input class="search-input" style="margin-bottom:14px;" placeholder="Search name or phone…" oninput="searchRequests(this.value)" id="requestSearch">
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table>
+            <thead><tr>
+              <th>Name</th><th>Phone</th><th>Amount</th><th>Fee</th><th>Network</th><th>Code</th><th>Status</th><th>Date</th>
+            </tr></thead>
+            <tbody id="requestsTbody"><tr><td colspan="8" class="loading-row">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CODES ───────────────────────────────── -->
+    <div class="page-section" id="page-codes">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">These codes rotate per user request. You can add, edit, enable/disable, or delete codes here.</p>
+
+      <div class="add-code-form">
+        <div class="form-group">
+          <label>New Agent Code</label>
+          <input class="form-input" id="newCodeInput" placeholder="e.g. 385621" maxlength="10">
+        </div>
+        <button class="add-btn" onclick="addCode()">+ Add Code</button>
+      </div>
+
+      <div class="codes-grid" id="codesGrid">
+        <div class="no-data">Loading codes…</div>
+      </div>
+    </div>
+
+    <!-- ── PHONES ───────────────────────────────── -->
+    <div class="page-section" id="page-phones">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">All phone numbers that have submitted a loan request.</p>
+      <div class="table-wrap">
+        <div style="padding:18px;" id="phonesContainer"><div class="no-data">Loading…</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" style="display:none;" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <a id="lightboxDl" href="#" download="proof.jpg" target="_blank" onclick="event.stopPropagation();" style="position:absolute;top:20px;right:64px;background:rgba(255,107,0,0.85);border:none;color:#fff;font-size:13px;font-weight:700;padding:7px 14px;border-radius:8px;text-decoration:none;display:flex;align-items:center;gap:5px;">⬇ Download</a>
+  <img id="lightboxImg" src="" alt="Proof Screenshot">
+</div>
+
+<!-- Notes modal -->
+<div id="notesModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:14px;padding:24px;max-width:440px;width:100%;max-height:90vh;overflow-y:auto;">
+    <h3 style="font-size:16px;font-weight:800;margin-bottom:12px;">Review Submission</h3>
+    <div id="modalDlArea"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Admin Notes</div>
+    <textarea id="notesInput" rows="3" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;resize:vertical;" placeholder="Add notes about this submission…"></textarea>
+    <div style="display:flex;gap:10px;margin-top:12px;">
+      <button onclick="submitAction('approved')" style="flex:1;padding:10px;background:var(--green);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;">✓ Approve</button>
+      <button onclick="submitAction('rejected')" style="flex:1;padding:10px;background:var(--red);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;">✕ Reject</button>
+      <button onclick="closeNotesModal()" style="padding:10px 16px;background:#f1f5f9;color:var(--muted);border:none;border-radius:8px;font-weight:700;cursor:pointer;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const BACKEND = 'https://backend-loan-server.onrender.com';
+
+/* ── Mobile sidebar toggle ────────────────────── */
+function toggleSidebar() {
+  const sidebar  = document.getElementById('sidebar');
+  const overlay  = document.getElementById('sidebarOverlay');
+  const isOpen   = sidebar.classList.contains('open');
+  sidebar.classList.toggle('open', !isOpen);
+  overlay.classList.toggle('open', !isOpen);
+  document.body.style.overflow = isOpen ? '' : 'hidden';
+}
+// Close sidebar on nav-item click (mobile)
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar.classList.contains('open')) toggleSidebar();
+  });
+});
+
+let allProofs = [];
+let allRequests = [];
+let currentProofFilter = 'all';
+let currentProofSearch = '';
+let currentActionId = null;
+
+/* ── Spinner helpers ──────────────────────────── */
+function showSpinner(id) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;padding:30px;gap:10px;color:var(--muted);"><div style="width:20px;height:20px;border:2px solid #e2e8f0;border-top-color:var(--orange);border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;"></div> Loading…</div>';
+}
+function showTableSpinner(id, cols) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = `<tr><td colspan="${cols}" style="text-align:center;padding:30px;color:var(--muted);"><div style="display:inline-flex;align-items:center;gap:10px;"><div style="width:18px;height:18px;border:2px solid #e2e8f0;border-top-color:var(--orange);border-radius:50%;animation:spin 0.8s linear infinite;"></div> Loading…</div></td></tr>`;
+}
+function showTableError(id, cols, msg) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = `<tr><td colspan="${cols}" style="text-align:center;padding:24px;color:var(--red);font-size:13px;font-weight:600;">⚠ ${msg || 'Failed to load. Check backend connection.'}</td></tr>`;
+}
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--red);font-size:13px;font-weight:600;">⚠ ${msg || 'Failed to load'}</div>`;
+}
+
+/* ── API wrapper ──────────────────────────────── */
+async function api(path, options) {
+  try {
+    const res = await fetch(BACKEND + path, options);
+    if (!res.ok) {
+      const text = await res.text();
+      return { success: false, error: `HTTP ${res.status}: ${text.slice(0,120)}` };
+    }
+    return await res.json();
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+}
+
+/* ── Load all ─────────────────────────────────── */
+async function loadAllData() {
+  setStatLoadingState();
+  await Promise.all([loadAnalytics(), loadProofs(), loadRequests(), loadCodes()]);
+}
+
+/* Show dashes+spinner in stat cards while loading */
+function setStatLoadingState() {
+  ['stat-total','stat-today','stat-pending','stat-approved','stat-rejected','stat-unique'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<div style="width:28px;height:28px;border:3px solid #e2e8f0;border-top-color:var(--orange);border-radius:50%;animation:spin 0.8s linear infinite;margin:4px auto;"></div>';
+  });
+}
+
+/* ── Analytics ────────────────────────────────── */
+async function loadAnalytics() {
+  const data = await api('/api/admin/analytics');
+  if (!data.success) {
+    // Show 0 on all stats + red error hint
+    ['stat-total','stat-today','stat-pending','stat-approved','stat-rejected','stat-unique'].forEach(id => setText(id, 0));
+    showToast('Analytics error: ' + (data.error || 'Backend unreachable'), 'error');
+    document.getElementById('networkChart').innerHTML = '<div style="text-align:center;padding:14px;font-size:12px;color:var(--red);">⚠ Could not load — check backend</div>';
+    document.getElementById('codeChart').innerHTML   = '<div style="text-align:center;padding:14px;font-size:12px;color:var(--red);">⚠ Could not load — check backend</div>';
+    return;
+  }
+  const a = data.analytics;
+  setText('stat-total',    a.totalRequests  ?? 0);
+  setText('stat-today',    a.todayRequests  ?? 0);
+  setText('stat-pending',  a.pendingProofs  ?? 0);
+  setText('stat-approved', a.approvedProofs ?? 0);
+  setText('stat-rejected', a.rejectedProofs ?? 0);
+  setText('stat-unique',   a.uniquePhones   ?? 0);
+
+  renderBarChart('networkChart', a.networkBreakdown, ['#FF6B00','#16a34a','#3b82f6','#7c3aed']);
+  renderBarChart('codeChart',    a.codeBreakdown,    ['#FF6B00','#16a34a','#3b82f6','#7c3aed']);
+
+  const pc = document.getElementById('phonesContainer');
+  if (pc) {
+    pc.innerHTML = (a.phones && a.phones.length)
+      ? a.phones.map(p => `<span class="phone-tag">📱 ${p}</span>`).join('')
+      : '<div class="no-data">No phone numbers yet</div>';
+  }
+}
+
+function renderBarChart(containerId, obj, colors) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!obj || !Object.keys(obj).length) {
+    el.innerHTML = '<div style="text-align:center;padding:14px;font-size:12px;color:var(--muted);">No data yet — shows 0</div>';
+    return;
+  }
+  const entries = Object.entries(obj);
+  const max = Math.max(...entries.map(e => e[1]), 1);
+  el.innerHTML = entries.map(([label, val], i) => `
+    <div class="bar-row">
+      <div class="bar-label">${label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(val/max*100).toFixed(1)}%;background:${colors[i % colors.length]};"></div></div>
+      <div class="bar-val">${val}</div>
+    </div>
+  `).join('');
+}
+
+/* ── Proofs ───────────────────────────────────── */
+async function loadProofs() {
+  showTableSpinner('latestProofsTbody', 7);
+  showTableSpinner('proofsTbody', 8);
+
+  const data = await api('/api/admin/submissions');
+  if (!data.success) {
+    showTableError('latestProofsTbody', 7, data.error);
+    showTableError('proofsTbody', 8, data.error);
+    return;
+  }
+  allProofs = data.data || [];
+  renderProofs();
+  renderLatestProofs();
+}
+
+function renderLatestProofs() {
+  const tbody = document.getElementById('latestProofsTbody');
+  const latest = allProofs.slice(0, 8);
+  if (!latest.length) { tbody.innerHTML = '<tr><td colspan="7" class="loading-row td">No submissions yet — shows 0</td></tr>'; return; }
+  tbody.innerHTML = latest.map(p => proofRowOverview(p)).join('');
+}
+
+function renderProofs() {
+  const tbody = document.getElementById('proofsTbody');
+  let filtered = allProofs;
+  if (currentProofFilter !== 'all') filtered = filtered.filter(p => p.status === currentProofFilter);
+  if (currentProofSearch) {
+    const q = currentProofSearch.toLowerCase();
+    filtered = filtered.filter(p => (p.name||'').toLowerCase().includes(q) || (p.phone||'').includes(q) || (p.code_assigned||'').includes(q));
+  }
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="8" class="loading-row td">No records found</td></tr>'; return; }
+  tbody.innerHTML = filtered.map(p => proofRowFull(p)).join('');
+}
+
+/* Overview table row (7 cols: screenshot, name, phone, code, date, status, actions) */
+function proofRowOverview(p) {
+  const date = p.created_at ? new Date(p.created_at).toLocaleString() : '—';
+  const codeTag = p.code_assigned
+    ? `<code style="background:#fff4ed;color:#FF6B00;padding:2px 7px;border-radius:5px;font-size:11px;font-weight:800;border:1px solid #fed7aa;">${p.code_assigned}</code>`
+    : '<span style="color:#94a3b8;font-size:11px;">—</span>';
+  const thumbHtml = p.screenshot_url
+    ? `<img class="thumb" src="${p.screenshot_url}" alt="proof" onclick="openLightbox('${escHtml(p.screenshot_url)}')">`
+    : '<span style="color:#94a3b8;font-size:11px;">No img</span>';
+  return `<tr>
+    <td>${thumbHtml}</td>
+    <td><strong>${escHtml(p.name||'—')}</strong></td>
+    <td>${escHtml(p.phone||'—')}</td>
+    <td>${codeTag}</td>
+    <td style="color:var(--muted);font-size:11px;white-space:nowrap;">${date}</td>
+    <td><span class="badge ${p.status||'pending'}">${p.status||'pending'}</span></td>
+    <td><button class="action-btn btn-view" onclick="openNotesModal('${p.id}')">Review</button></td>
+  </tr>`;
+}
+
+/* Full proofs table row (8 cols: screenshot, name, phone, code, date, status, notes, actions) */
+function proofRowFull(p) {
+  const date = p.created_at ? new Date(p.created_at).toLocaleString() : '—';
+  const codeTag = p.code_assigned
+    ? `<code style="background:#fff4ed;color:#FF6B00;padding:2px 7px;border-radius:5px;font-size:12px;font-weight:800;border:1px solid #fed7aa;">${p.code_assigned}</code>`
+    : '<span style="color:#94a3b8;font-size:11px;">—</span>';
+  const thumbHtml = p.screenshot_url
+    ? `<img class="thumb" src="${p.screenshot_url}" alt="proof" onclick="openLightbox('${escHtml(p.screenshot_url)}')">`
+    : '<span style="color:#94a3b8;font-size:11px;">No img</span>';
+  const dlBtn = p.screenshot_url
+    ? `<a href="${escHtml(p.screenshot_url)}" download="proof-${p.id||'file'}.jpg" target="_blank" class="action-btn btn-view" style="text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="Download screenshot">⬇ Download</a>`
+    : '';
+  return `<tr>
+    <td>${thumbHtml}</td>
+    <td><strong>${escHtml(p.name||'—')}</strong></td>
+    <td>${escHtml(p.phone||'—')}</td>
+    <td>${codeTag}</td>
+    <td style="color:var(--muted);font-size:11px;white-space:nowrap;">${date}</td>
+    <td><span class="badge ${p.status||'pending'}">${p.status||'pending'}</span></td>
+    <td style="font-size:11px;color:var(--muted);max-width:110px;">${escHtml(p.admin_notes||'—')}</td>
+    <td><div style="display:flex;gap:5px;flex-wrap:wrap;">
+      <button class="action-btn btn-approve" onclick="openNotesModal('${p.id}')">Review</button>
+      ${p.screenshot_url ? `<button class="action-btn btn-view" onclick="openLightbox('${escHtml(p.screenshot_url)}')">View</button>` : ''}
+      ${dlBtn}
+    </div></td>
+  </tr>`;
+}
+
+/* ── Requests ─────────────────────────────────── */
+async function loadRequests() {
+  showTableSpinner('requestsTbody', 8);
+  const data = await api('/api/admin/requests');
+  if (!data.success) { showTableError('requestsTbody', 8, data.error); return; }
+  allRequests = data.data || [];
+  renderRequests();
+}
+
+function renderRequests(filter) {
+  const tbody = document.getElementById('requestsTbody');
+  let rows = filter
+    ? allRequests.filter(r => (r.name||'').toLowerCase().includes(filter) || (r.phone||'').includes(filter))
+    : allRequests;
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="8" class="loading-row td">No requests yet — shows 0</td></tr>'; return; }
+  tbody.innerHTML = rows.map(r => {
+    const date = r.created_at ? new Date(r.created_at).toLocaleString() : '—';
+    return `<tr>
+      <td><strong>${escHtml(r.name||'—')}</strong></td>
+      <td>${escHtml(r.phone||'—')}</td>
+      <td>SLE ${parseFloat(r.amount||0).toLocaleString()}</td>
+      <td>SLE ${parseFloat(r.fee||0).toLocaleString()}</td>
+      <td>${escHtml(r.network||'—')}</td>
+      <td><code style="background:#fff4ed;color:#FF6B00;padding:2px 7px;border-radius:5px;font-size:12px;font-weight:800;border:1px solid #fed7aa;">${r.code_assigned||'—'}</code></td>
+      <td><span class="badge ${r.status||'pending'}">${r.status||'pending'}</span></td>
+      <td style="color:var(--muted);font-size:11px;white-space:nowrap;">${date}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── Codes ────────────────────────────────────── */
+async function loadCodes() {
+  showSpinner('codesGrid');
+  const data = await api('/api/admin/codes');
+  const grid = document.getElementById('codesGrid');
+  if (!data.success) { showError('codesGrid', data.error); return; }
+  const codes = data.data || [];
+  if (!codes.length) { grid.innerHTML = '<div class="no-data">No codes yet — shows 0. Add one above.</div>'; return; }
+  grid.innerHTML = codes.map(c => `
+    <div class="code-card ${c.is_active ? 'active-code' : ''}">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">Loan Agent Code</div>
+        <div class="code-display">${c.code}</div>
+        <div class="code-status ${c.is_active ? 'on' : 'off'}">${c.is_active ? '● Active' : '○ Inactive'}</div>
+      </div>
+      <div class="code-actions">
+        <button class="toggle-btn ${c.is_active ? 'toggle-off' : 'toggle-on'}" onclick="toggleCode('${c.id}', ${!c.is_active})">${c.is_active ? 'Deactivate' : 'Activate'}</button>
+        <button class="delete-code-btn" onclick="deleteCode('${c.id}')">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function addCode() {
+  const input = document.getElementById('newCodeInput');
+  const code = input.value.trim();
+  if (!code || code.length < 4) { showToast('Enter a valid code (min 4 digits)', 'error'); return; }
+  const data = await api('/api/admin/codes', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ code }) });
+  if (data.success) { input.value = ''; showToast('Code added!', 'success'); loadCodes(); }
+  else showToast(data.error || 'Failed to add code', 'error');
+}
+
+async function toggleCode(id, isActive) {
+  const data = await api(`/api/admin/codes/${id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ is_active: isActive }) });
+  if (data.success) { showToast(isActive ? 'Code activated' : 'Code deactivated', 'success'); loadCodes(); }
+  else showToast('Failed to update code', 'error');
+}
+
+async function deleteCode(id) {
+  if (!confirm('Delete this agent code?')) return;
+  const data = await api(`/api/admin/codes/${id}`, { method:'DELETE' });
+  if (data.success) { showToast('Code deleted', 'info'); loadCodes(); }
+  else showToast('Failed to delete', 'error');
+}
+
+/* ── Review modal ─────────────────────────────── */
+function openNotesModal(id) {
+  currentActionId = id;
+  // Pre-fill screenshot download link in modal
+  const proof = allProofs.find(p => p.id === id);
+  const dlArea = document.getElementById('modalDlArea');
+  if (dlArea && proof && proof.screenshot_url) {
+    dlArea.innerHTML = `<div style="margin-bottom:12px;">
+      <img src="${escHtml(proof.screenshot_url)}" style="width:100%;max-height:180px;object-fit:contain;border-radius:10px;border:1px solid var(--border);cursor:pointer;" onclick="openLightbox('${escHtml(proof.screenshot_url)}')">
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button onclick="openLightbox('${escHtml(proof.screenshot_url)}')" style="flex:1;padding:7px;background:#f1f5f9;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;color:var(--muted);">🔍 View Full</button>
+        <a href="${escHtml(proof.screenshot_url)}" download="proof-${id}.jpg" target="_blank" style="flex:1;padding:7px;background:#fff4ed;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;color:#FF6B00;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px;">⬇ Download</a>
+      </div>
+      ${proof.code_assigned ? `<div style="margin-top:8px;background:#fff4ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 10px;font-size:12px;"><span style="color:#92400e;font-weight:600;">Agent Code Used:</span> <code style="color:#FF6B00;font-weight:800;font-size:14px;letter-spacing:2px;">${proof.code_assigned}</code></div>` : ''}
+      ${proof.name ? `<div style="margin-top:6px;font-size:12px;color:var(--muted);">👤 <strong>${escHtml(proof.name)}</strong> &nbsp;📱 ${escHtml(proof.phone||'')}</div>` : ''}
+    </div>`;
+  } else if (dlArea) {
+    dlArea.innerHTML = '';
+  }
+  document.getElementById('notesInput').value = '';
+  document.getElementById('notesModal').style.display = 'flex';
+}
+
+function closeNotesModal() {
+  document.getElementById('notesModal').style.display = 'none';
+  currentActionId = null;
+}
+
+async function submitAction(status) {
+  if (!currentActionId) return;
+  const notes = document.getElementById('notesInput').value.trim();
+  const data = await api(`/api/admin/proof/${currentActionId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status, admin_notes: notes })
+  });
+  if (data.success) {
+    showToast(`Proof ${status}!`, status === 'approved' ? 'success' : 'error');
+    closeNotesModal();
+    loadProofs();
+    loadAnalytics();
+  } else showToast(data.error || 'Failed', 'error');
+}
+
+/* ── Filters & search ─────────────────────────── */
+function filterProofs(filter, btn) {
+  currentProofFilter = filter;
+  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderProofs();
+}
+function searchProofs(val)    { currentProofSearch = val; renderProofs(); }
+function searchRequests(val)  { renderRequests(val.toLowerCase()); }
+
+/* ── Lightbox ─────────────────────────────────── */
+function openLightbox(url) {
+  if (!url) return;
+  document.getElementById('lightboxImg').src = url;
+  document.getElementById('lightboxDl').href = url;
+  document.getElementById('lightbox').style.display = 'flex';
+}
+function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
+
+/* ── Page nav ─────────────────────────────────── */
+function showPage(page) {
+  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  event.currentTarget.classList.add('active');
+  const titles = { overview:'Overview', proofs:'Payment Proofs', requests:'Loan Requests', codes:'Agent Codes', phones:'User Phones' };
+  document.getElementById('pageTitle').textContent = titles[page] || page;
+}
+
+/* ── Helpers ──────────────────────────────────── */
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = (val === undefined || val === null) ? '0' : String(val);
+}
+function escHtml(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function showToast(msg, type='info') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+loadAllData();
+setInterval(loadAllData, 30000);
+</script>
+</body>
+</html>
